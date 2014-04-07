@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <GL/glut.h>
 
 using namespace std;
 
@@ -19,40 +20,45 @@ Vect BezPatch::at(int i, int j) const{
     return this->data[j][i];
 }
 
-vector< vector<SurfacePt> > BezPatch::getMesh(double stepSize){
-    int numdiv = 1.0/stepSize;
-    vector< vector<SurfacePt> > mesh(numdiv*numdiv);
-    for (int i = 0; i < numdiv; i++){
-        for (int j = 0; j < numdiv; j++){
-            this->interpolateBezier2d(i*stepSize,j*stepSize, mesh[i][j].pos, mesh[i][j].deriv);
+vector< vector<SurfacePt> > BezPatch::getMesh(double stepSize,double epsilon){
+    vector< vector<SurfacePt> > mesh;
+    for (double u = 0; u <= 1.0+epsilon; u+=stepSize){
+        vector<SurfacePt> curr;
+        for (double v = 0; v <= 1.0+epsilon; v+=stepSize){
+            curr.push_back(this->interpolateBezier2d(u,v));
         }
+        mesh.push_back(curr);
     }
     return mesh;
 }
 
-void BezPatch::interpolateBezier1d(double u, Vect a, Vect b, Vect c, Vect d, Vect& pos, Vect& deriv){
+SurfacePt BezPatch::interpolateBezier1d(double u, Vect a, Vect b, Vect c, Vect d){
     Vect e = (1-u)*a+(u)*b;
     Vect f = (1-u)*b+(u)*c;
     Vect g = (1-u)*c+(u)*d;
     Vect h = (1-u)*e+(u)*f;
     Vect i = (1-u)*f+(u)*g;
-    pos = (1-u)*h+(u)*i;
-    deriv = 3*(i-h);
+    SurfacePt out;
+    out.pos = (1-u)*h+(u)*i;
+    out.deriv = 3*(i-h);
+    return out;
 }
 
-void BezPatch::interpolateBezier2d(double u, double v, Vect& pos, Vect& deriv){
-    Vect va,vb,vc,vd,ua,ub,uc,ud, ddu,ddv;
-    this->interpolateBezier1d(u,this->at(0,0),this->at(0,1),this->at(0,2),this->at(0,3),va,deriv);
-    this->interpolateBezier1d(u,this->at(1,0),this->at(1,1),this->at(1,2),this->at(1,3),vb,deriv);
-    this->interpolateBezier1d(u,this->at(2,0),this->at(2,1),this->at(2,2),this->at(2,3),vc,deriv);
-    this->interpolateBezier1d(u,this->at(3,0),this->at(3,1),this->at(3,2),this->at(3,3),vd,deriv);
-    this->interpolateBezier1d(v,this->at(0,0),this->at(1,0),this->at(2,0),this->at(3,0),ua,deriv);
-    this->interpolateBezier1d(v,this->at(0,1),this->at(1,1),this->at(2,1),this->at(3,1),ub,deriv);
-    this->interpolateBezier1d(v,this->at(0,2),this->at(1,2),this->at(2,2),this->at(3,2),uc,deriv);
-    this->interpolateBezier1d(v,this->at(0,3),this->at(1,3),this->at(2,3),this->at(3,3),ud,deriv);
-    this->interpolateBezier1d(v,va,vb,vc,vd,pos,ddv);
-    this->interpolateBezier1d(u,ua,ub,uc,ud,pos,ddu);
-    deriv = normalized(cross(ddu,ddv));
+SurfacePt BezPatch::interpolateBezier2d(double u, double v){
+    Vect va = this->interpolateBezier1d(u,this->at(0,0),this->at(0,1),this->at(0,2),this->at(0,3)).pos;
+    Vect vb = this->interpolateBezier1d(u,this->at(1,0),this->at(1,1),this->at(1,2),this->at(1,3)).pos;
+    Vect vc = this->interpolateBezier1d(u,this->at(2,0),this->at(2,1),this->at(2,2),this->at(2,3)).pos;
+    Vect vd = this->interpolateBezier1d(u,this->at(3,0),this->at(3,1),this->at(3,2),this->at(3,3)).pos;
+    Vect ua = this->interpolateBezier1d(v,this->at(0,0),this->at(1,0),this->at(2,0),this->at(3,0)).pos;
+    Vect ub = this->interpolateBezier1d(v,this->at(0,1),this->at(1,1),this->at(2,1),this->at(3,1)).pos;
+    Vect uc = this->interpolateBezier1d(v,this->at(0,2),this->at(1,2),this->at(2,2),this->at(3,2)).pos;
+    Vect ud = this->interpolateBezier1d(v,this->at(0,3),this->at(1,3),this->at(2,3),this->at(3,3)).pos;
+    SurfacePt p1 = this->interpolateBezier1d(v,va,vb,vc,vd);
+    SurfacePt p2 = this->interpolateBezier1d(u,ua,ub,uc,ud);
+    SurfacePt out;
+    out.deriv = normalized(cross(p1.deriv,p2.deriv));
+    out.pos=p1.pos;
+    return out;
 }
 
 ///////////////
@@ -103,6 +109,34 @@ BezPatch Bez::operator[](int i) const{
 
 int Bez::size(){
     return this->data.size();
+}
+void Bez::render(double stepSize, double epsilon){
+    glBegin(GL_QUADS);
+    for (int i = 0; i < this->size(); i++){
+        vector< vector<SurfacePt> > vertices = (*this)[i].getMesh(stepSize,epsilon);
+        for (int j = 0; j < vertices.size()-1; j++){
+            for (int k = 0; k < vertices[j].size()-1; k++){
+                Vect a = vertices[j][k].pos;
+                Vect an = vertices[j][k].deriv;
+                Vect b = vertices[j+1][k].pos;
+                Vect bn = vertices[j+1][k].deriv;
+                Vect c = vertices[j+1][k+1].pos;
+                Vect cn = vertices[j+1][k+1].deriv;
+                Vect d = vertices[j][k+1].pos;
+                Vect dn = vertices[j][k+1].deriv;
+                glNormal3d(an.getX(), an.getY(), an.getZ());
+                glVertex3f(a.getX(), a.getY(), a.getZ());
+                glNormal3d(bn.getX(), bn.getY(), bn.getZ());
+                glVertex3f(b.getX(), b.getY(), b.getZ());
+                glNormal3d(cn.getX(), cn.getY(), cn.getZ());
+                glVertex3f(c.getX(), c.getY(), c.getZ());
+                glNormal3d(dn.getX(), dn.getY(), dn.getZ());
+                glVertex3f(d.getX(), d.getY(), d.getZ());
+            }
+        }
+    }
+    glEnd();
+
 }
 
 ostream& operator<<(ostream& lhs, Bez rhs){

@@ -14,7 +14,7 @@ typedef double scalar;
 
 class Vect{
     public:
-        friend ostream& operator<<(ostream& lhs, Vect& v);
+        friend ostream& operator<<(ostream& lhs, Vect v);
         friend class Ray;
         Vect();
         Vect(Vect* v);

@@ -15,11 +15,11 @@ class BezPatch{
         BezPatch();
         BezPatch(std::vector< std::vector<Vect> > data);
         Vect at(int i, int j) const;
-        vector< vector<SurfacePt> > getMesh(double stepSize);
+        vector< vector<SurfacePt> > getMesh(double stepSize,double epsilon);
     protected:
         std::vector< std::vector<Vect> > data;
-        static void interpolateBezier1d(double u, Vect a, Vect b, Vect c, Vect d, Vect& pos, Vect& deriv);
-        void interpolateBezier2d(double u, double v, Vect& pos, Vect& deriv);
+        SurfacePt interpolateBezier1d(double u, Vect a, Vect b, Vect c, Vect d);
+        SurfacePt interpolateBezier2d(double u, double v);
 };
 
 class Bez{
@@ -30,6 +30,7 @@ class Bez{
         BezPatch at(int i) const;
         BezPatch operator[](int i) const;
         int size();
+        void render(double stepSize, double epsilon);
     protected:
         std::vector<BezPatch> data;
 };
