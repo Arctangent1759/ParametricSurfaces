@@ -12,6 +12,7 @@ typedef struct {
     bool wireframe;
     bool smooth;
     bool hiddenSurface;
+    bool adaptive;
     Bez bez;
 } View;
 View view;
@@ -84,6 +85,11 @@ void myDisplay(){
 }
 
 int main(int argc, char* argv[]){
+    if (argc != 3 && argc != 4){
+        cerr << "USAGE: " << argv[0] << " <inputfile> <param> [-a]" << endl;
+        exit(-1);
+    }
+
     viewport.w = 400;
     viewport.h = 400;
     view.x=0;
@@ -91,15 +97,19 @@ int main(int argc, char* argv[]){
     view.z=-30;
     view.ax=0;
     view.ay=0;
-    view.bez = Bez("./bez/teapot.bez",0.1);
+    view.bez = Bez(argv[1],atof(argv[2]));
+    view.adaptive = (argc==43 && string(argv[3]) == "-a");
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
     glutInitWindowSize(viewport.w, viewport.h);
     glutCreateWindow(argv[0]);
     glEnable(GL_DEPTH_TEST);
+
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
+    //glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+
     glutDisplayFunc(myDisplay);
     glutReshapeFunc(myReshape);
 
