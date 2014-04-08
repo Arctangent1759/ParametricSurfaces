@@ -12,23 +12,35 @@ using namespace std;
 
 BezPatch::BezPatch(){}
 
-BezPatch::BezPatch(vector< vector<Vect> > data){
+BezPatch::BezPatch(vector< vector<Vect> > data,double stepSize){
     this->data = data;
+    this->mesh = this->getMesh(stepSize);
 }
 
 Vect BezPatch::at(int i, int j) const{
     return this->data[j][i];
 }
 
-vector< vector<SurfacePt> > BezPatch::getMesh(double stepSize,double epsilon){
+vector< vector<SurfacePt> > BezPatch::getMesh(){
+    return this->mesh;
+}
+
+vector< vector<SurfacePt> > BezPatch::getMesh(double stepSize){
     vector< vector<SurfacePt> > mesh;
-    for (double u = 0; u <= 1.0+epsilon; u+=stepSize){
+    for (double u = 0; u < 1.0; u+=stepSize){
         vector<SurfacePt> curr;
-        for (double v = 0; v <= 1.0+epsilon; v+=stepSize){
+        for (double v = 0; v < 1.0; v+=stepSize){
             curr.push_back(this->interpolateBezier2d(u,v));
         }
+        curr.push_back(this->interpolateBezier2d(u,1.0));
         mesh.push_back(curr);
     }
+    vector<SurfacePt> curr;
+    for (double v = 0; v < 1.0; v+=stepSize){
+        curr.push_back(this->interpolateBezier2d(1.0,v));
+    }
+    curr.push_back(this->interpolateBezier2d(1.0,1.0));
+    mesh.push_back(curr);
     return mesh;
 }
 
@@ -68,10 +80,7 @@ SurfacePt BezPatch::interpolateBezier2d(double u, double v){
 Bez::Bez(){
     this->data = vector<BezPatch>();
 }
-Bez::Bez(vector<BezPatch> data){
-    this->data = data;
-}
-Bez::Bez(string filename){
+Bez::Bez(string filename, double stepSize){
     ifstream file(filename.c_str());
     string line;
     double x,y,z;
@@ -96,7 +105,7 @@ Bez::Bez(string filename){
         patchData.push_back(out[i+1]);
         patchData.push_back(out[i+2]);
         patchData.push_back(out[i+3]);
-        bezPatches.push_back(BezPatch(patchData));
+        bezPatches.push_back(BezPatch(patchData,stepSize));
     }
     this->data = bezPatches;
 }
@@ -110,10 +119,10 @@ BezPatch Bez::operator[](int i) const{
 int Bez::size(){
     return this->data.size();
 }
-void Bez::render(double stepSize, double epsilon){
+void Bez::render(double stepSize){
     glBegin(GL_QUADS);
     for (int i = 0; i < this->size(); i++){
-        vector< vector<SurfacePt> > vertices = (*this)[i].getMesh(stepSize,epsilon);
+        vector< vector<SurfacePt> > vertices = (*this)[i].getMesh();
         for (int j = 0; j < vertices.size()-1; j++){
             for (int k = 0; k < vertices[j].size()-1; k++){
                 Vect a = vertices[j][k].pos;
@@ -138,6 +147,52 @@ void Bez::render(double stepSize, double epsilon){
     glEnd();
 
 }
+
+void Bez::renderMesh(double stepSize){
+    glBegin(GL_LINES);
+    for (int i = 0; i < this->size(); i++){
+        vector< vector<SurfacePt> > vertices = (*this)[i].getMesh();
+        for (int j = 0; j < vertices.size()-1; j++){
+            for (int k = 0; k < vertices[j].size()-1; k++){
+                Vect a = vertices[j][k].pos;
+                Vect an = vertices[j][k].deriv;
+                Vect b = vertices[j+1][k].pos;
+                Vect bn = vertices[j+1][k].deriv;
+                Vect c = vertices[j+1][k+1].pos;
+                Vect cn = vertices[j+1][k+1].deriv;
+                Vect d = vertices[j][k+1].pos;
+                Vect dn = vertices[j][k+1].deriv;
+
+                glNormal3d(an.getX(), an.getY(), an.getZ());
+                glVertex3f(a.getX(), a.getY(), a.getZ());
+
+                glNormal3d(bn.getX(), bn.getY(), bn.getZ());
+                glVertex3f(b.getX(), b.getY(), b.getZ());
+
+                glNormal3d(bn.getX(), bn.getY(), bn.getZ());
+                glVertex3f(b.getX(), b.getY(), b.getZ());
+
+                glNormal3d(cn.getX(), cn.getY(), cn.getZ());
+                glVertex3f(c.getX(), c.getY(), c.getZ());
+
+                glNormal3d(cn.getX(), cn.getY(), cn.getZ());
+                glVertex3f(c.getX(), c.getY(), c.getZ());
+
+                glNormal3d(dn.getX(), dn.getY(), dn.getZ());
+                glVertex3f(d.getX(), d.getY(), d.getZ());
+
+                glNormal3d(dn.getX(), dn.getY(), dn.getZ());
+                glVertex3f(d.getX(), d.getY(), d.getZ());
+
+                glNormal3d(an.getX(), an.getY(), an.getZ());
+                glVertex3f(a.getX(), a.getY(), a.getZ());
+            }
+        }
+    }
+    glEnd();
+
+}
+
 
 ostream& operator<<(ostream& lhs, Bez rhs){
     lhs << "Bez(" << endl;

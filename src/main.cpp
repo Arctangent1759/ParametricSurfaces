@@ -12,6 +12,7 @@ typedef struct {
     bool wireframe;
     bool smooth;
     bool hiddenSurface;
+    Bez bez;
 } View;
 View view;
 const double CAMERA_STEP=.15;
@@ -72,7 +73,11 @@ void myDisplay(){
 
     glShadeModel(view.smooth?GL_SMOOTH:GL_FLAT);
 
-    Bez("bez/teapot.bez").render(.1,0);
+    if (view.wireframe){
+        view.bez.renderMesh(.07);
+    }else{
+        view.bez.render(.07);
+    }
 
     glFlush();
     glutSwapBuffers();
@@ -86,12 +91,13 @@ int main(int argc, char* argv[]){
     view.z=-30;
     view.ax=0;
     view.ay=0;
+    view.bez = Bez("./bez/teapot.bez",0.1);
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
     glutInitWindowSize(viewport.w, viewport.h);
     glutCreateWindow(argv[0]);
-    glEnable(GL_DEPTH_TEST);/*Hidden surfaces*/
+    glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
     glutDisplayFunc(myDisplay);
