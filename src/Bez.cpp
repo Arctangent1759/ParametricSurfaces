@@ -165,9 +165,9 @@ void Bez::renderMesh(double stepSize){
         for (int j = 0; j < vertices.size(); j++){
             for (int k = 0; k < vertices[j].size(); k++){
                 Vect a = vertices[j][k].pos;
-                Vect an = vertices[j][k].deriv;
+                Vect an = -1*vertices[j][k].deriv;
                 Vect b = vertices[j][(k+1)%vertices[j].size()].pos;
-                Vect bn = vertices[j][(k+1)%vertices[j].size()].deriv;
+                Vect bn = -1*vertices[j][(k+1)%vertices[j].size()].deriv;
 
                 glNormal3d(an.getX(), an.getY(), an.getZ());
                 glVertex3f(a.getX(), a.getY(), a.getZ());
