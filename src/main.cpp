@@ -24,7 +24,7 @@ void myReshape(int x,int y){
     viewport.h=y;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(20, viewport.w / (float) viewport.h, .01, 100);
+    gluPerspective(20, viewport.w / (float) viewport.h, .01, 50);
     glViewport(0,0,viewport.w,viewport.h);
     glMatrixMode(GL_MODELVIEW);
 }
@@ -105,10 +105,29 @@ int main(int argc, char* argv[]){
     glutInitWindowSize(viewport.w, viewport.h);
     glutCreateWindow(argv[0]);
     glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_NORMALIZE);
+
+    //glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+
+    /*GLfloat ambient[] = {0, 1, 1, 1.0};
+    glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+
+    GLfloat light_position[] = {10, 10, -10, 1.0};
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
+    GLfloat diffuse[] = {0, 0.5, 0.5, 1.0};
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
+
+    GLfloat specular[] = {0.0, 1.0, 1.0, 1.0};
+    glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+
+    glMaterialf(GL_FRONT, GL_SHININESS, 25.0);*/
 
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-    //glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+
+//    glColorMaterial(GL_FRONT, GL_DIFFUSE);
+//    glEnable(GL_COLOR_MATERIAL);
 
     glutDisplayFunc(myDisplay);
     glutReshapeFunc(myReshape);
