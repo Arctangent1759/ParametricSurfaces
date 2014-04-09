@@ -17,7 +17,8 @@ class BezPatch{
         Vect at(int i, int j) const;
         vector< vector<SurfacePt> > getMesh();
     protected:
-        vector< vector<SurfacePt> > getMesh(double stepSize);
+        vector< vector<SurfacePt> > uniformSubidivde(double stepSize);
+        vector< vector<SurfacePt> > adaptiveSubdivide(double threshold);
         SurfacePt interpolateBezier1d(double u, Vect a, Vect b, Vect c, Vect d);
         SurfacePt interpolateBezier2d(double u, double v);
         std::vector< std::vector<Vect> > data;

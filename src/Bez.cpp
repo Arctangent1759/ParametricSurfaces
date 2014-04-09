@@ -14,7 +14,7 @@ BezPatch::BezPatch(){}
 
 BezPatch::BezPatch(vector< vector<Vect> > data,double stepSize){
     this->data = data;
-    this->mesh = this->getMesh(stepSize);
+    this->mesh = this->uniformSubidivde(stepSize);
 }
 
 Vect BezPatch::at(int i, int j) const{
@@ -25,7 +25,18 @@ vector< vector<SurfacePt> > BezPatch::getMesh(){
     return this->mesh;
 }
 
-vector< vector<SurfacePt> > BezPatch::getMesh(double stepSize){
+vector< vector<SurfacePt> > BezPatch::adaptiveSubdivide(double threshold){
+    vector< vector<SurfacePt> > out;
+    if (
+            norm(interpolateBezier2d(0.5,0).pos - (this->at(0,0)-this->at(3,0))) < threshold
+            && norm(interpolateBezier2d(0.5,1).pos - (this->at(0,3)-this->at(3,3))) < threshold
+            && norm(interpolateBezier2d(0,0.5).pos - (this->at(0,0)-this->at(0,3))) < threshold
+            && norm(interpolateBezier2d(1,0.5).pos - (this->at(3,0)-this->at(3,3))) < threshold
+       ){
+    }
+}
+
+vector< vector<SurfacePt> > BezPatch::uniformSubidivde(double stepSize){
     vector< vector<SurfacePt> > points;
     for (double u = 0; u < 1.0; u+=stepSize){
         vector<SurfacePt> curr;
