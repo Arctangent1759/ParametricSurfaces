@@ -12,9 +12,13 @@ using namespace std;
 
 BezPatch::BezPatch(){}
 
-BezPatch::BezPatch(vector< vector<Vect> > data,double stepSize){
+BezPatch::BezPatch(vector< vector<Vect> > data,double stepSize, bool uniform){
     this->data = data;
-    this->mesh = this->uniformSubidivde(stepSize);
+    if (uniform){
+        this->mesh = this->uniformSubidivde(stepSize);
+    }else{
+        this->mesh = this->adaptiveSubdivide(stepSize);
+    }
 }
 
 Vect BezPatch::at(int i, int j) const{
@@ -27,14 +31,90 @@ vector< vector<SurfacePt> > BezPatch::getMesh(){
 
 vector< vector<SurfacePt> > BezPatch::adaptiveSubdivide(double threshold){
     vector< vector<SurfacePt> > out;
-    if (
-            norm(interpolateBezier2d(0.5,0).pos - (this->at(0,0)-this->at(3,0))) < threshold
-            && norm(interpolateBezier2d(0.5,1).pos - (this->at(0,3)-this->at(3,3))) < threshold
-            && norm(interpolateBezier2d(0,0.5).pos - (this->at(0,0)-this->at(0,3))) < threshold
-            && norm(interpolateBezier2d(1,0.5).pos - (this->at(3,0)-this->at(3,3))) < threshold
-       ){
+    for (int i = 0; i < 3; i++){
+        for (int j = 0; j < 3; j++){
+            vector< vector<SurfacePt> > t1 = subdivideTriangle(Vect(i*.25,j*.25,0), Vect((i+1)*.25,j*.25,0), Vect((i+1)*.25,(j+1)*.25,0), this->at(i,j), this->at(i+1,j), this->at(i+1,j+1), threshold);
+            vector< vector<SurfacePt> > t2 = subdivideTriangle(Vect(i*.25,j*.25,0), Vect(i*.25,(j+1)*.25,0), Vect((i+1)*.25,(j+1)*.25,0), this->at(i,j), this->at(i,j+1), this->at(i+1,j+1), threshold);
+            out.insert(out.end(),t1.begin(),t1.end());
+            out.insert(out.end(),t2.begin(),t2.end());
+        }
     }
+    return out;
 }
+vector< vector<SurfacePt> > BezPatch::subdivideTriangle(Vect ua, Vect ub, Vect uc, Vect xa, Vect xb, Vect xc, double threshold){
+    cout << "===\tEnter\t===" << endl;
+    vector< vector<SurfacePt> > out;
+    Vect um1 = (ua+ub)/2;
+    Vect um2 = (ub+uc)/2;
+    Vect um3 = (uc+ua)/2;
+    Vect xm1 = interpolateBezier2d(um1).pos;
+    Vect xm2 = interpolateBezier2d(um2).pos;
+    Vect xm3 = interpolateBezier2d(um3).pos;
+    bool e1 = norm(xm1-(xa-xb)/2) < threshold;
+    bool e2 = norm(xm2-(xb-xc)/2) < threshold;
+    bool e3 = norm(xm3-(xc-xa)/2) < threshold;
+    cout << "\t\t" << ua << ub << uc << endl;
+    cout << "\t\t" << xa << xb << xc << endl;
+    cout << "\t\t" << e1 << e2 << e3 << endl;
+    cout << "\t\t" << norm(xm1-(xa-xb)/2) << endl;
+    cout << "\t\t" << norm(xm2-(xb-xc)/2) << endl;
+    cout << "\t\t" << norm(xm3-(xc-xa)/2) << endl;
+    if (e1 && e2 && e3){
+        vector<SurfacePt> triangle;
+        triangle.push_back(interpolateBezier2d(ua));
+        triangle.push_back(interpolateBezier2d(ub));
+        triangle.push_back(interpolateBezier2d(uc));
+        out.push_back(triangle);
+    }else if (!e1 && e2 && e3){
+        vector< vector<SurfacePt> > t1 = subdivideTriangle(uc,um1,ua, xc, xm1, xa, threshold);
+        vector< vector<SurfacePt> > t2 = subdivideTriangle(uc,um1,ub, xc, xm1, xb, threshold);
+        out.insert(out.end(), t1.begin(), t1.end());
+        out.insert(out.end(), t2.begin(), t2.end());
+    }else if (e1 && !e2 && e3){
+        vector< vector<SurfacePt> > t1 = subdivideTriangle(ua,um2,ub, xa, xm2, xb, threshold);
+        vector< vector<SurfacePt> > t2 = subdivideTriangle(ua,um2,uc, xa, xm2, xc, threshold);
+        out.insert(out.end(), t1.begin(), t1.end());
+        out.insert(out.end(), t2.begin(), t2.end());
+    }else if (e1 && e2 && !e3){
+        vector< vector<SurfacePt> > t1 = subdivideTriangle(ub,um3,ua, xb, xm3, xa, threshold);
+        vector< vector<SurfacePt> > t2 = subdivideTriangle(ub,um3,uc, xb, xm3, xc, threshold);
+        out.insert(out.end(), t1.begin(), t1.end());
+        out.insert(out.end(), t2.begin(), t2.end());
+    }else if (!e1 && !e2 && e3){
+        vector< vector<SurfacePt> > t1 = subdivideTriangle(um2,um1,ub, xm2, xm1, xb, threshold);
+        vector< vector<SurfacePt> > t2 = subdivideTriangle(um2,um1,uc, xm2, xm1, xc, threshold);
+        vector< vector<SurfacePt> > t3 = subdivideTriangle(um1,ua,uc, xm1, xa, xc, threshold);
+        out.insert(out.end(), t1.begin(), t1.end());
+        out.insert(out.end(), t2.begin(), t2.end());
+        out.insert(out.end(), t3.begin(), t3.end());
+    }else if (!e1 && e2 && !e3){
+        vector< vector<SurfacePt> > t1 = subdivideTriangle(um1,um3,ua, xm1, xm3, xa, threshold);
+        vector< vector<SurfacePt> > t2 = subdivideTriangle(um1,um3,ub, xm1, xm3, xb, threshold);
+        vector< vector<SurfacePt> > t3 = subdivideTriangle(um3,uc,ub, xm3, xc, xb, threshold);
+        out.insert(out.end(), t1.begin(), t1.end());
+        out.insert(out.end(), t2.begin(), t2.end());
+        out.insert(out.end(), t3.begin(), t3.end());
+    }else if (e1 && !e2 && !e3){
+        vector< vector<SurfacePt> > t1 = subdivideTriangle(um3,um2,uc, xm3, xm2, xc, threshold);
+        vector< vector<SurfacePt> > t2 = subdivideTriangle(um3,um2,ua, xm3, xm2, xa, threshold);
+        vector< vector<SurfacePt> > t3 = subdivideTriangle(um2,ua,ub, xm2, xa, xb, threshold);
+        out.insert(out.end(), t1.begin(), t1.end());
+        out.insert(out.end(), t2.begin(), t2.end());
+        out.insert(out.end(), t3.begin(), t3.end());
+    }else if (!e1 && !e2 && !e3){
+        vector< vector<SurfacePt> > t1 = subdivideTriangle(ua,um1,um3, xa, xm1, xm3, threshold);
+        vector< vector<SurfacePt> > t2 = subdivideTriangle(ub,um1,um2, xb, xm1, xm2, threshold);
+        vector< vector<SurfacePt> > t3 = subdivideTriangle(uc,um2,um3, xc, xm2, xm3, threshold);
+        vector< vector<SurfacePt> > t4 = subdivideTriangle(um1,um2,um3, xm1, xm2, xm3, threshold);
+        out.insert(out.end(), t1.begin(), t1.end());
+        out.insert(out.end(), t2.begin(), t2.end());
+        out.insert(out.end(), t3.begin(), t3.end());
+        out.insert(out.end(), t4.begin(), t4.end());
+    }
+    cout << "\t" << "===\tExit\t===" << endl;
+    return out;
+}
+
 
 vector< vector<SurfacePt> > BezPatch::uniformSubidivde(double stepSize){
     vector< vector<SurfacePt> > points;
@@ -94,6 +174,9 @@ SurfacePt BezPatch::interpolateBezier2d(double u, double v){
     out.pos=p1.pos;
     return out;
 }
+SurfacePt BezPatch::interpolateBezier2d(Vect u){
+    return interpolateBezier2d(u.getX(), u.getY());
+}
 
 ///////////////
 //  BezDefs  //
@@ -102,7 +185,7 @@ SurfacePt BezPatch::interpolateBezier2d(double u, double v){
 Bez::Bez(){
     this->data = vector<BezPatch>();
 }
-Bez::Bez(string filename, double stepSize){
+Bez::Bez(string filename, double stepSize, bool uniform){
     ifstream file(filename.c_str());
     string line;
     double x,y,z;
@@ -127,9 +210,10 @@ Bez::Bez(string filename, double stepSize){
         patchData.push_back(out[i+1]);
         patchData.push_back(out[i+2]);
         patchData.push_back(out[i+3]);
-        bezPatches.push_back(BezPatch(patchData,stepSize));
+        bezPatches.push_back(BezPatch(patchData,stepSize, uniform));
     }
     this->data = bezPatches;
+    this->uniform = uniform;
 }
 BezPatch Bez::at(int i) const{
     return this->data[i];
@@ -142,7 +226,7 @@ int Bez::size(){
     return this->data.size();
 }
 void Bez::render(double stepSize){
-    glBegin(GL_QUADS);
+    glBegin(this->uniform?GL_QUADS:GL_TRIANGLES);
     for (int i = 0; i < this->size(); i++){
         vector< vector<SurfacePt> > polys = (*this)[i].getMesh();
         for (int j = 0; j < polys.size(); j++){

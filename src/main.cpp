@@ -99,7 +99,7 @@ int main(int argc, char* argv[]){
     view.z=-30;
     view.ax=0;
     view.ay=0;
-    view.bez = Bez(argv[1],atof(argv[2]));
+    view.bez = Bez(argv[1],atof(argv[2]),false);
     view.adaptive = (argc==43 && string(argv[3]) == "-a");
 
     glutInit(&argc, argv);
