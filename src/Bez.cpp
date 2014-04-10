@@ -162,7 +162,7 @@ SurfacePt BezPatch::interpolateBezier2d(double u, double v){
     SurfacePt p1 = this->interpolateBezier1d(v,va,vb,vc,vd);
     SurfacePt p2 = this->interpolateBezier1d(u,ua,ub,uc,ud);
     SurfacePt out;
-    out.deriv = normalized(cross(p1.deriv,p2.deriv));
+    out.deriv = normalized(cross(p2.deriv,p1.deriv));
     out.pos=p1.pos;
     return out;
 }
@@ -217,7 +217,7 @@ BezPatch Bez::operator[](int i) const{
 int Bez::size(){
     return this->data.size();
 }
-void Bez::render(double stepSize){
+void Bez::render(){
     glBegin(this->uniform?GL_QUADS:GL_TRIANGLES);
     for (int i = 0; i < this->size(); i++){
         vector< vector<SurfacePt> > polys = (*this)[i].getMesh();
@@ -234,22 +234,32 @@ void Bez::render(double stepSize){
 
 }
 
-void Bez::renderMesh(double stepSize){
+void Bez::renderMesh(bool showNormals){
     glBegin(GL_LINES);
     for (int i = 0; i < this->size(); i++){
         vector< vector<SurfacePt> > vertices = (*this)[i].getMesh();
         for (int j = 0; j < vertices.size(); j++){
             for (int k = 0; k < vertices[j].size(); k++){
                 Vect a = vertices[j][k].pos;
-                Vect an = -1*vertices[j][k].deriv;
+                Vect an = vertices[j][k].deriv;
                 Vect b = vertices[j][(k+1)%vertices[j].size()].pos;
-                Vect bn = -1*vertices[j][(k+1)%vertices[j].size()].deriv;
+                Vect bn = vertices[j][(k+1)%vertices[j].size()].deriv;
 
                 glNormal3d(an.getX(), an.getY(), an.getZ());
                 glVertex3f(a.getX(), a.getY(), a.getZ());
 
                 glNormal3d(bn.getX(), bn.getY(), bn.getZ());
                 glVertex3f(b.getX(), b.getY(), b.getZ());
+
+                //Show normals
+                if (showNormals){
+                    Vect ad = a+an;
+                    Vect bd = b+bn;
+                    glVertex3f(a.getX(), a.getY(), a.getZ());
+                    glVertex3f(ad.getX(), ad.getY(), ad.getZ());
+                    glVertex3f(b.getX(), b.getY(), b.getZ());
+                    glVertex3f(bd.getX(), bd.getY(), bd.getZ());
+                }
             }
         }
     }

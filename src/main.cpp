@@ -77,9 +77,9 @@ void myDisplay(){
     glShadeModel(view.smooth?GL_SMOOTH:GL_FLAT);
 
     if (view.wireframe){
-        view.bez.renderMesh(.07);
+        view.bez.renderMesh(false);
     }else{
-        view.bez.render(.07);
+        view.bez.render();
     }
 
     glFlush();
@@ -99,34 +99,30 @@ int main(int argc, char* argv[]){
     view.z=-30;
     view.ax=0;
     view.ay=0;
-    view.bez = Bez(argv[1],atof(argv[2]),false);
-    view.adaptive = (argc==43 && string(argv[3]) == "-a");
+    view.adaptive = (argc>=4 && string(argv[3]) == "-a");
+    view.bez = Bez(argv[1],atof(argv[2]),!view.adaptive);
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
     glutInitWindowSize(viewport.w, viewport.h);
     glutCreateWindow(argv[0]);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_NORMALIZE);
 
-    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-
-    GLfloat ambient[] = {0, 1, 1, 1.0};
-    glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-
-    GLfloat diffuse[] = {0, 0.5, 0.5, 1.0};
-    glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
-
-    GLfloat specular[] = {0.0, 1.0, 1.0, 1.0};
-    glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
-
-    glMaterialf(GL_FRONT, GL_SHININESS, 25.0);
+    //glEnable(GL_NORMALIZE);
+    //glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+    //GLfloat ambient[] = {.1, .1, .1, .1};
+    //glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+    //GLfloat diffuse[] = {0, 0.5, 0.5, 1.0};
+    //glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
+    //GLfloat specular[] = {0.0, 1.0, 1.0, 1.0};
+    //glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+    //glMaterialf(GL_FRONT, GL_SHININESS, 25.0);
 
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
 
-    glColorMaterial(GL_FRONT, GL_DIFFUSE);
-    glEnable(GL_COLOR_MATERIAL);
+    //glColorMaterial(GL_FRONT, GL_DIFFUSE);
+    //glEnable(GL_COLOR_MATERIAL);
 
     glutDisplayFunc(myDisplay);
     glutReshapeFunc(myReshape);

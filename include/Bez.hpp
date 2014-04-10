@@ -34,8 +34,8 @@ class Bez{
         BezPatch at(int i) const;
         BezPatch operator[](int i) const;
         int size();
-        void render(double stepSize);
-        void renderMesh(double stepSize);
+        void render();
+        void renderMesh(bool showNormals);
     protected:
         std::vector<BezPatch> data;
         bool uniform;
