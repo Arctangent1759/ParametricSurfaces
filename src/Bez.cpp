@@ -162,7 +162,10 @@ SurfacePt BezPatch::interpolateBezier2d(double u, double v){
     SurfacePt p1 = this->interpolateBezier1d(v,va,vb,vc,vd);
     SurfacePt p2 = this->interpolateBezier1d(u,ua,ub,uc,ud);
     SurfacePt out;
-    out.deriv = normalized(cross(p2.deriv,p1.deriv));
+    out.deriv = normalized(cross(p1.deriv,p2.deriv));
+    if (norm(out.deriv)==0){
+        out.deriv = interpolateBezier2d(u+0.001,v).deriv;
+    }
     out.pos=p1.pos;
     return out;
 }
@@ -206,6 +209,7 @@ Bez::Bez(string filename, double stepSize, bool uniform){
     }
     this->data = bezPatches;
     this->uniform = uniform;
+    file.close();
 }
 BezPatch Bez::at(int i) const{
     return this->data[i];
@@ -218,19 +222,20 @@ int Bez::size(){
     return this->data.size();
 }
 void Bez::render(){
-    glBegin(this->uniform?GL_QUADS:GL_TRIANGLES);
     for (int i = 0; i < this->size(); i++){
         vector< vector<SurfacePt> > polys = (*this)[i].getMesh();
         for (int j = 0; j < polys.size(); j++){
+            glBegin(GL_POLYGON);
             for (int k = 0; k < polys[j].size(); k++){
                 Vect pos = polys[j][k].pos;
-                Vect norm = polys[j][k].deriv;
-                glNormal3d(norm.getX(), norm.getY(), norm.getZ());
+                Vect normal = polys[j][k].deriv;
+                glColor3d(0.5,0.1,.1);
+                glNormal3d(normal.getX(), normal.getY(), normal.getZ());
                 glVertex3d(pos.getX(), pos.getY(), pos.getZ());
             }
+            glEnd();
         }
     }
-    glEnd();
 
 }
 
@@ -264,7 +269,39 @@ void Bez::renderMesh(bool showNormals){
         }
     }
     glEnd();
+}
 
+void Bez::toObj(string filename){
+    stringstream normals("\n");
+    stringstream vertices("\n");
+    stringstream faces("\n");
+    int index = 1;
+    for (int i = 0; i < this->size(); i++){
+        vector< vector<SurfacePt> > polys = (*this)[i].getMesh();
+        for (int j = 0; j < polys.size(); j++){
+            glBegin(GL_POLYGON);
+            stringstream face;
+            face << "f ";
+            for (int k = 0; k < polys[j].size(); k++){
+                Vect pos = polys[j][polys[j].size()-k-1].pos;
+                Vect normal = polys[j][polys[j].size()-k-1].deriv;
+                normals << "vn " << normal.getX() << " " << normal.getY() << " " << normal.getZ() << endl;
+                vertices << "v " << pos.getX() << " " <<  pos.getY() << " " <<  pos.getZ() << endl;
+                face << index << "//" << index << " ";
+                index++;
+            }
+            faces << face.rdbuf() << endl;
+            glEnd();
+        }
+    }
+
+    ofstream file(filename.c_str());
+    file << vertices.rdbuf();
+    file << endl;
+    file << normals.rdbuf();
+    file << endl;
+    file << faces.rdbuf();
+    file.close();
 }
 
 

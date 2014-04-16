@@ -36,6 +36,7 @@ class Bez{
         int size();
         void render();
         void renderMesh(bool showNormals);
+        void toObj(string filename);
     protected:
         std::vector<BezPatch> data;
         bool uniform;

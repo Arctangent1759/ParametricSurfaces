@@ -1,5 +1,5 @@
 #include <GL/glut.h>
-#include "Bez.hpp"
+#include "Renderer.hpp"
 #include <iostream>
 
 typedef struct {
@@ -13,7 +13,7 @@ typedef struct {
     bool smooth;
     bool hiddenSurface;
     bool adaptive;
-    Bez bez;
+    Renderer model;
 } View;
 View view;
 const double CAMERA_STEP=.15;
@@ -68,8 +68,6 @@ void myDisplay(){
     glLoadIdentity();
 
     glTranslatef(view.x, view.y, view.z);
-    GLfloat light_position[] = {view.x, view.y, view.z,1.0};
-    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     glRotatef(view.ax, 1, 0, 0);
     glRotatef(view.ay, 0, 0, 1);
 
@@ -77,9 +75,9 @@ void myDisplay(){
     glShadeModel(view.smooth?GL_SMOOTH:GL_FLAT);
 
     if (view.wireframe){
-        view.bez.renderMesh(false);
+        view.model.renderMesh(false);
     }else{
-        view.bez.render();
+        view.model.render();
     }
 
     glFlush();
@@ -87,7 +85,8 @@ void myDisplay(){
 }
 
 int main(int argc, char* argv[]){
-    if (argc != 3 && argc != 4){
+
+    if (argc != 3 && argc != 4 && argc != 5 && argc != 6){
         cerr << "USAGE: " << argv[0] << " <inputfile> <param> [-a]" << endl;
         exit(-1);
     }
@@ -100,7 +99,15 @@ int main(int argc, char* argv[]){
     view.ax=0;
     view.ay=0;
     view.adaptive = (argc>=4 && string(argv[3]) == "-a");
-    view.bez = Bez(argv[1],atof(argv[2]),!view.adaptive);
+    view.model = Renderer(argv[1],atof(argv[2]),!view.adaptive);
+
+    if (argc==5 && string(argv[3])=="-o"){
+        cout << "Writing to " << argv[4] << endl;
+        view.model.write(argv[4]);
+    }else if (argc == 6 && string(argv[4])=="-o"){
+        cout << "Writing to " << argv[5] << endl;
+        view.model.write(argv[5]);
+    }
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
@@ -108,27 +115,21 @@ int main(int argc, char* argv[]){
     glutCreateWindow(argv[0]);
     glEnable(GL_DEPTH_TEST);
 
-    //glEnable(GL_NORMALIZE);
-    //glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-    //GLfloat ambient[] = {.1, .1, .1, .1};
-    //glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-    //GLfloat diffuse[] = {0, 0.5, 0.5, 1.0};
-    //glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
-    //GLfloat specular[] = {0.0, 1.0, 1.0, 1.0};
-    //glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
-    //glMaterialf(GL_FRONT, GL_SHININESS, 25.0);
-
     glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    GLfloat specularColor[] = { 1.0, 1.0, 1.0, 1.0 };
+    GLfloat shiny[] = {8.0 };
+    GLfloat lightPos[] = { 1.0, 1.0, 1.0, 0.0 };
+    glMaterialfv(GL_FRONT, GL_SPECULAR, specularColor);
+    glMaterialfv(GL_FRONT, GL_SHININESS, shiny);
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
 
-    //glColorMaterial(GL_FRONT, GL_DIFFUSE);
-    //glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_LIGHT0);
 
     glutDisplayFunc(myDisplay);
     glutReshapeFunc(myReshape);
-
     glutKeyboardFunc(onKeyDown);
     glutSpecialFunc(special);
-
     glutMainLoop();
 }
