@@ -22,6 +22,7 @@ class BezPatch{
         SurfacePt interpolateBezier1d(double u, Vect a, Vect b, Vect c, Vect d);
         SurfacePt interpolateBezier2d(double u, double v);
         SurfacePt interpolateBezier2d(Vect u);
+        double getGaussianCurvature(double u, double v);
         vector< vector<SurfacePt> > subdivideTriangle(Vect ua, Vect ub, Vect uc, Vect xa, Vect xb, Vect xc, double threshold);
         std::vector< std::vector<Vect> > data;
         vector< vector<SurfacePt> > mesh;

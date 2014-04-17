@@ -150,6 +150,11 @@ SurfacePt BezPatch::interpolateBezier1d(double u, Vect a, Vect b, Vect c, Vect d
     return out;
 }
 
+const double DELTA = 0.0000001;
+
+double BezPatch::getGaussianCurvature(double u, double v){
+}
+
 SurfacePt BezPatch::interpolateBezier2d(double u, double v){
     Vect va = this->interpolateBezier1d(u,this->at(0,0),this->at(0,1),this->at(0,2),this->at(0,3)).pos;
     Vect vb = this->interpolateBezier1d(u,this->at(1,0),this->at(1,1),this->at(1,2),this->at(1,3)).pos;
@@ -164,11 +169,13 @@ SurfacePt BezPatch::interpolateBezier2d(double u, double v){
     SurfacePt out;
     out.deriv = normalized(cross(p1.deriv,p2.deriv));
     if (norm(out.deriv)==0){
-        out.deriv = interpolateBezier2d(u+0.001,v).deriv;
+        SurfacePt sp = interpolateBezier2d(u+DELTA,v);
+        out.deriv=sp.deriv;
     }
     out.pos=p1.pos;
     return out;
 }
+
 SurfacePt BezPatch::interpolateBezier2d(Vect u){
     return interpolateBezier2d(u.getX(), u.getY());
 }

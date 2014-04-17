@@ -85,8 +85,7 @@ void myDisplay(){
 }
 
 int main(int argc, char* argv[]){
-
-    if (argc != 3 && argc != 4 && argc != 5 && argc != 6){
+    if (argc != 3 && argc != 4 && argc != 5 && argc != 6 && (string(argv[1]).substr(string(argv[1]).rfind('.'),-1)!=".obj")){
         cerr << "USAGE: " << argv[0] << " <inputfile> <param> [-a]" << endl;
         exit(-1);
     }
@@ -99,7 +98,11 @@ int main(int argc, char* argv[]){
     view.ax=0;
     view.ay=0;
     view.adaptive = (argc>=4 && string(argv[3]) == "-a");
-    view.model = Renderer(argv[1],atof(argv[2]),!view.adaptive);
+    if (string(argv[1]).substr(string(argv[1]).rfind('.'),-1)==".obj"){
+        view.model = Renderer(argv[1],0,!view.adaptive);
+    }else{
+        view.model = Renderer(argv[1],atof(argv[2]),!view.adaptive);
+    }
 
     if (argc==5 && string(argv[3])=="-o"){
         cout << "Writing to " << argv[4] << endl;
@@ -107,6 +110,9 @@ int main(int argc, char* argv[]){
     }else if (argc == 6 && string(argv[4])=="-o"){
         cout << "Writing to " << argv[5] << endl;
         view.model.write(argv[5]);
+    }else if (argc==4 && string(argv[2])=="-o" && string(argv[1]).substr(string(argv[1]).rfind('.'),-1)==".obj"){
+        cout << "Writing to " << argv[3] << endl;
+        view.model.write(argv[3]);
     }
 
     glutInit(&argc, argv);
