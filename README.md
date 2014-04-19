@@ -78,3 +78,8 @@ bin/runner bez/teapot.bez 0.01 -a -o teapot.obj
 bin/runner obj/dodecahedron.obj -o dodecahedron.bez
 
 When converting an obj file to a bez, the normals are lost, so smooth shading will return the same results as flat shading.
+
+_Example Images_
+
+Folder 'images' contains several example images corresponding to images on the website. They were all generated with the commands listed above.
+
