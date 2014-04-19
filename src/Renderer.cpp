@@ -28,6 +28,6 @@ void Renderer::write(string filename){
     if (this->isBez){
         this->b.toObj(filename);
     }else{
-        this->o.toObj(filename);
+        this->o.toBez(filename);
     }
 }

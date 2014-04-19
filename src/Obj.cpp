@@ -126,10 +126,89 @@ void Obj::renderMesh(bool showNormals){
     }
     glEnd();
 }
+
+
 void Obj::toObj(string filename){
     ofstream file(filename.c_str());
     ifstream file2(this->filename.c_str());
     file << file2.rdbuf();
     file.close();
+    
     file2.close();
+}
+void Obj::toBez(string filename){
+    vector< vector< vector<Vect> > > bezList;
+    for (int i = 0; i < polygons.size(); i++){
+        vector<SurfacePt> poly = polygons[i];
+        vector< vector<Vect> > bezPatch(4);
+        for (int j = 0; j < 4; j++){bezPatch[j]=vector<Vect>(4);}
+        if (poly.size() == 3){
+            bezPatch[0][0]=poly[0].pos;
+
+            bezPatch[0][1]=0.75*poly[0].pos+0.25*poly[1].pos;
+            bezPatch[0][2]=0.25*poly[0].pos+0.75*poly[1].pos;
+
+            bezPatch[0][3]=poly[1].pos;
+
+            bezPatch[1][3]=0.75*poly[1].pos+0.25*poly[2].pos;
+            bezPatch[2][3]=0.25*poly[1].pos+0.75*poly[2].pos;
+
+            bezPatch[3][3]=poly[2].pos;
+
+            bezPatch[3][2]=poly[2].pos;
+            bezPatch[3][1]=poly[2].pos;
+
+            bezPatch[3][0]=poly[2].pos;
+
+            bezPatch[2][0]=0.75*poly[2].pos+0.25*poly[0].pos;
+            bezPatch[1][0]=0.25*poly[2].pos+0.75*poly[0].pos;
+
+            bezPatch[1][1]=0.75*bezPatch[0][1]+0.25*bezPatch[3][1];
+            bezPatch[1][2]=0.75*bezPatch[0][2]+0.25*bezPatch[3][2];
+            bezPatch[2][2]=0.25*bezPatch[0][2]+0.75*bezPatch[3][2];
+            bezPatch[2][1]=0.25*bezPatch[0][1]+0.75*bezPatch[3][1];
+
+        }else if(poly.size()==4){
+            bezPatch[0][0]=poly[0].pos;
+
+            bezPatch[0][1]=0.75*poly[0].pos+0.25*poly[1].pos;
+            bezPatch[0][2]=0.25*poly[0].pos+0.75*poly[1].pos;
+
+            bezPatch[0][3]=poly[1].pos;
+
+            bezPatch[1][3]=0.75*poly[1].pos+0.25*poly[2].pos;
+            bezPatch[2][3]=0.25*poly[1].pos+0.75*poly[2].pos;
+
+            bezPatch[3][3]=poly[2].pos;
+
+            bezPatch[3][2]=0.75*poly[2].pos+0.25*poly[3].pos;
+            bezPatch[3][1]=0.25*poly[2].pos+0.75*poly[3].pos;
+
+            bezPatch[3][0]=poly[3].pos;
+
+            bezPatch[2][0]=0.75*poly[3].pos+0.25*poly[0].pos;
+            bezPatch[1][0]=0.25*poly[3].pos+0.75*poly[0].pos;
+
+            bezPatch[1][1]=0.75*bezPatch[0][1]+0.25*bezPatch[3][1];
+            bezPatch[1][2]=0.75*bezPatch[0][2]+0.25*bezPatch[3][2];
+            bezPatch[2][2]=0.25*bezPatch[0][2]+0.75*bezPatch[3][2];
+            bezPatch[2][1]=0.25*bezPatch[0][1]+0.75*bezPatch[3][1];
+
+        }else{
+        }
+        bezList.push_back(bezPatch);
+    }
+    ofstream file(filename.c_str());
+    file << bezList.size() << endl;
+    for (int i = 0; i < bezList.size(); i++){
+        for (int j = 0; j < 4; j++){
+            for (int k = 0; k < 4; k++){
+                file << bezList[i][j][k].getX() << " "<< bezList[i][j][k].getY() << " "<< bezList[i][j][k].getZ() << "   ";
+            }
+            file << endl;
+        }
+        file << endl;
+    }
+    file.close();
+
 }

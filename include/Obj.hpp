@@ -14,6 +14,7 @@ class Obj{
         void render();
         void renderMesh(bool showNormals);
         void toObj(string filename);
+        void toBez(string filename);
     protected:
         vector< vector<SurfacePt> > polygons;
         string filename;
