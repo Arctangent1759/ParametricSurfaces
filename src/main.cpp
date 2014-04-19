@@ -107,12 +107,15 @@ int main(int argc, char* argv[]){
     if (argc==5 && string(argv[3])=="-o"){
         cout << "Writing to " << argv[4] << endl;
         view.model.write(argv[4]);
+        exit(0);
     }else if (argc == 6 && string(argv[4])=="-o"){
         cout << "Writing to " << argv[5] << endl;
         view.model.write(argv[5]);
+        exit(0);
     }else if (argc==4 && string(argv[2])=="-o" && string(argv[1]).substr(string(argv[1]).rfind('.'),-1)==".obj"){
         cout << "Writing to " << argv[3] << endl;
         view.model.write(argv[3]);
+        exit(0);
     }
 
     glutInit(&argc, argv);
